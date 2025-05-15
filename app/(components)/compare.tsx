@@ -199,15 +199,18 @@ export const Compare = ({
 
       <AnimatePresence initial={false}>
         {secondImage ? (
-          <motion.img
-            className={cn(
-              "absolute top-0 left-0 z-[19]  rounded-2xl w-full h-full select-none",
-              secondImageClassname
-            )}
-            alt="second image"
-            src={secondImage}
-            draggable={false}
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <motion.img
+              className={cn(
+                "absolute top-0 left-0 z-[19]  rounded-2xl w-full h-full select-none",
+                secondImageClassname
+              )}
+              alt="second image"
+              src={secondImage}
+              draggable={false}
+            />
+          </>
         ) : null}
       </AnimatePresence>
     </div>
