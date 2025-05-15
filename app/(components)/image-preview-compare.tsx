@@ -41,22 +41,6 @@ export function ImagePreviewCompare({
       displayHeight = Math.max(displayHeight, 200);
     }
   }
-  // For modal, use up to 90vw/vh but keep aspect
-  const modalMaxW = Math.min(
-    width,
-    window?.innerWidth ? window.innerWidth * 0.9 : 900
-  );
-  const modalMaxH = Math.min(
-    height,
-    window?.innerHeight ? window.innerHeight * 0.9 : 900
-  );
-  let modalW = width,
-    modalH = height;
-  if (width > modalMaxW || height > modalMaxH) {
-    const scale = Math.min(modalMaxW / width, modalMaxH / height);
-    modalW = Math.round(width * scale);
-    modalH = Math.round(height * scale);
-  }
 
   // Handle wheel zoom in modal
   function handleModalWheel(e: React.WheelEvent) {
@@ -95,6 +79,7 @@ export function ImagePreviewCompare({
           {/* Show only the image preview if not loading and not converted */}
           {!svgContent && (
             <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imagePreview}
                 alt="Uploaded preview"
@@ -115,7 +100,7 @@ export function ImagePreviewCompare({
               <Compare
                 firstImage={imagePreview}
                 secondImage={`data:image/svg+xml;utf8,${encodeURIComponent(
-                  svgContent
+                  svgContent || ""
                 )}`}
                 className="w-full h-full object-contain rounded-lg"
                 slideMode="hover"
@@ -155,17 +140,20 @@ export function ImagePreviewCompare({
               }}
             >
               {!svgContent ? (
-                <img
-                  src={imagePreview}
-                  alt="Zoomed preview"
-                  className="w-full h-full object-contain rounded-lg"
-                  style={{ aspectRatio: `${width} / ${height}` }}
-                />
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imagePreview}
+                    alt="Zoomed preview"
+                    className="w-full h-full object-contain rounded-lg"
+                    style={{ aspectRatio: `${width} / ${height}` }}
+                  />
+                </>
               ) : (
                 <Compare
                   firstImage={imagePreview}
                   secondImage={`data:image/svg+xml;utf8,${encodeURIComponent(
-                    svgContent
+                    svgContent || ""
                   )}`}
                   className="w-full h-full object-contain rounded-lg"
                   slideMode="hover"
@@ -174,7 +162,7 @@ export function ImagePreviewCompare({
               )}
             </div>
             {/* Zoom controls */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-white/80 rounded-lg px-3 py-1 shadow">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-white/80 rounded-lg px-3 py-1 shadow flex items-center">
               <button
                 className="text-lg px-2 py-1 rounded hover:bg-gray-200 disabled:opacity-50"
                 onClick={() =>

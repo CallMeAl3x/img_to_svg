@@ -1,8 +1,8 @@
 import React, { useCallback } from "react";
 
 interface ImageDropzoneProps {
-  getRootProps: () => any;
-  getInputProps: () => any;
+  getRootProps: () => React.HTMLAttributes<HTMLDivElement>;
+  getInputProps: () => React.InputHTMLAttributes<HTMLInputElement>;
   isLoading: boolean;
   file: File | null;
   onPasteImage?: (file: File) => void;
