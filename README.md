@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# img_to_svg
+
+A modern Next.js app for converting raster images (PNG) to SVG and visually comparing the results.
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run the development server:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+bun run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- Upload and preview PNG images
+- Convert images to SVG using ImageTracer
+- Compare original and SVG with interactive slider
+- Zoom and pan in modal view
+- Download SVG output
+- Customizable conversion settings
+- Mobile-friendly UI
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `app/` — Main application code and components
+  - `(components)/` — App-specific UI and logic components
+- `components/ui/` — UI primitives (Button, Input, Popover, etc.)
+- `hooks/` — Custom React hooks
+- `lib/` — Utility functions and settings descriptions
+- `public/` — Static assets
 
-## Deploy on Vercel
+## Main Dependencies
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [Next.js](https://nextjs.org/)
+- [framer-motion](https://www.framer.com/motion/)
+- [ImageTracerJS](https://github.com/jankovicsandras/imagetracerjs)
+- [@tabler/icons-react](https://tabler.io/icons)
+- [shadcn/ui](https://ui.shadcn.com/) (for UI primitives)
+- [clsx](https://github.com/lukeed/clsx) and [class-variance-authority](https://cva.style/)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+
+Deploy easily on [Vercel](https://vercel.com/) or your preferred platform.
+
+---
+
+Feel free to open issues or contribute!

@@ -1,103 +1,197 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { convertToSvgServer } from "../actions/convert";
+import { SettingsPanel } from "@/app/(components)/settings-panel";
+import { ImageDropzone } from "@/app/(components)/image-dropzone";
+import { SETTINGS_DESCRIPTIONS } from "@/lib/settings-descriptions";
+import { ImagePreviewCompare } from "@/app/(components)/image-preview-compare";
+import { toast } from "sonner";
+import { ActionBar } from "@/app/(components)/action-bar";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [file, setFile] = useState<File | null>(null);
+  const [svgContent, setSvgContent] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [settings, setSettings] = useState(
+    Object.fromEntries(
+      Object.entries(SETTINGS_DESCRIPTIONS).map(([key, { value }]) => [
+        key,
+        value,
+      ])
+    )
+  );
+  const defaultSettings = Object.fromEntries(
+    Object.entries(SETTINGS_DESCRIPTIONS).map(([key, { value }]) => [
+      key,
+      value,
+    ])
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [settingsChanged, setSettingsChanged] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const updateSetting = (key: string, value: number) => {
+    if (!isLoading) {
+      const newValue = key === "numberofcolors" && value < 2 ? 2 : value;
+      const newSettings = { ...settings, [key]: newValue };
+      setSettings(newSettings);
+      // Compare newSettings to defaultSettings and set settingsChanged accordingly
+      const changed = Object.keys(defaultSettings).some(
+        (k) => newSettings[k] !== defaultSettings[k]
+      );
+      setSettingsChanged(changed);
+    }
+  };
+
+  const onDrop = (acceptedFiles: File[]) => {
+    const uploadedFile = acceptedFiles[0];
+    setFile(uploadedFile);
+    setSvgContent(null); // Clear the current converted image
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        setImageDimensions({ width: img.width, height: img.height });
+      };
+      img.src = reader.result as string;
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(uploadedFile);
+  };
+
+  // Accept pasted PNG images
+  const onPasteImage = (pastedFile: File) => {
+    setFile(pastedFile);
+    setSvgContent(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        setImageDimensions({ width: img.width, height: img.height });
+      };
+      img.src = reader.result as string;
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(pastedFile);
+  };
+
+  const convertToSvg = async () => {
+    if (!file) return;
+    setIsLoading(true);
+    try {
+      const svgString = await convertToSvgServer(file, {
+        ltres: settings.ltres,
+        colorsampling: settings.colorsampling,
+        numberofcolors: settings.numberofcolors,
+        strokewidth: settings.strokewidth,
+        linefilter: settings.linefilter,
+      });
+      setSvgContent(svgString);
+      setSettingsChanged(false);
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred while converting the image.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const clearFile = () => {
+    setFile(null);
+    setSvgContent(null);
+    setImagePreview(null);
+    setImageDimensions(null);
+  };
+
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: { "image/png": [".png"] },
+  });
+
+  // Utility function for showing SVG copy toasts
+  function showCopyToast(success: boolean, error?: unknown) {
+    if (success) {
+      toast("Copied to your clipboard", {
+        duration: 3000,
+        style: {
+          background: "#22c55e",
+          color: "#fff",
+          width: "fit-content",
+          paddingRight: "1.5rem",
+          paddingLeft: "1.5rem",
+        },
+      });
+    } else {
+      toast("Failed to copy SVG", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Could not copy SVG to clipboard.",
+        duration: 3000,
+        style: {
+          background: "#ef4444",
+          color: "#fff",
+          width: "fit-content",
+        },
+      });
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-start min-h-screen p-8 overflow-auto pb-24 h-screen">
+      <h1 className="text-4xl font-extrabold mb-8 tracking-tight text-center text-gray-800 ml-32">
+        <span className="inline-block align-middle mr-3">🖼️</span>
+        PNG <span className="text-blue-600">→</span> SVG Converter
+      </h1>
+
+      {/* Responsive layout: side-by-side on desktop, stacked on mobile */}
+      <div className="w-full max-w-[1400px] flex flex-col md:flex-row gap-8 items-start justify-center mt-auto mb-auto">
+        {/* Left: Image dropzone and preview */}
+        <div className="flex-1 w-full md:w-2/3 flex flex-col items-center">
+          <ImageDropzone
+            getRootProps={getRootProps}
+            getInputProps={getInputProps}
+            isLoading={isLoading}
+            file={file}
+            onPasteImage={onPasteImage}
+          />
+
+          {imagePreview && imageDimensions && (
+            <ImagePreviewCompare
+              imagePreview={imagePreview}
+              imageDimensions={imageDimensions}
+              svgContent={svgContent}
+              isLoading={isLoading}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        {/* Right: Settings panel */}
+        <div className="w-full md:w-[600px] flex-shrink-0">
+          <SettingsPanel
+            settings={settings}
+            defaultSettings={SETTINGS_DESCRIPTIONS}
+            isLoading={isLoading}
+            updateSetting={updateSetting}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+      </div>
+
+      {/* Action Buttons - Improved UI */}
+      <ActionBar
+        isLoading={isLoading}
+        file={file}
+        svgContent={svgContent}
+        settingsChanged={settingsChanged}
+        clearFile={clearFile}
+        convertToSvg={convertToSvg}
+        showCopyToast={showCopyToast}
+      />
     </div>
   );
 }
